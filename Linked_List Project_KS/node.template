@@ -1,0 +1,240 @@
+
+//INPUT AND OUTPUT FUNCTIONS
+template<class R>
+std::istream & operator>>(std::istream &ins, sequence <R>& source) {
+    R data;
+    ins >> data;
+    source.insert_tail(data);
+    return ins;
+}
+
+template <class R>
+std::ostream &operator<<(std::ostream &out, const sequence<R>& source) {
+    typename sequence<R>::node* cursor;
+    for ( cursor = source.head_ptr; cursor != NULL; cursor = cursor -> link()){
+        out << cursor -> m_data << " --> ";
+    }
+    return out;
+}
+
+
+//MEMBER FUNCTIONS
+template <class T>
+void sequence<T>::insert_head(const T & entry) {
+    node *insert_ptr;
+    insert_ptr = new node;
+    insert_ptr->set_data(entry);
+    if(head_ptr == NULL){
+        head_ptr = insert_ptr;
+        tail_ptr = head_ptr;
+    }
+    else {
+        insert_ptr->set_link(head_ptr);
+        head_ptr = insert_ptr;
+    }
+    length ++;
+}
+
+template <class T>
+void sequence<T>::insert_tail(const T &value){
+    node *new_node = new node;
+    new_node->set_data(value);
+    if(head_ptr == NULL){
+        head_ptr = new_node;
+        tail_ptr = head_ptr;
+    }
+    else{
+        tail_ptr->set_link(new_node);
+        tail_ptr = new_node;
+    }
+    length++;
+}
+
+template <class T>
+void sequence<T>::insert_at(T index, const T data) {
+    if(head_ptr == NULL){
+        insert_head(data);
+    }
+    node *cursor = head_ptr;
+    for (int i = 1; i < index - 1; i++){
+        cursor = cursor->link();
+    }
+    node *insert_ptr;
+    insert_ptr = new node;
+    insert_ptr->set_data(data);
+    insert_ptr->set_link(cursor->link());
+    cursor->set_link(insert_ptr);
+    length++;
+}
+
+template <class T>
+void sequence<T>::remove_head() {
+    if (length == 0){
+        return;
+    }
+    node* remove_ptr;
+    remove_ptr = head_ptr;
+    head_ptr = head_ptr->link();
+    delete remove_ptr;
+    length--;
+}
+
+template <class T>
+void sequence<T>::remove_tail() {
+    if(head_ptr == NULL){
+        return;
+    }
+    node *cursor = head_ptr;
+    if (length == 1){
+        head_ptr = NULL;
+    }
+    else {
+        for (int i = 1; i < length - 1; i++) {
+            cursor = cursor->link();
+        }
+        cursor->set_link(NULL);
+        tail_ptr = cursor;
+        length--;
+    }
+}
+
+template <class T>
+void sequence<T>::remove_from(T index) {
+    if (head_ptr == NULL){
+        return;
+    }
+    node *cursor = head_ptr;
+    node *remove_ptr;
+    for(int i = 1; i < index - 1; i++){
+        cursor = cursor->link();
+    }
+    remove_ptr = cursor->link();
+    cursor->set_link(remove_ptr->link());
+    delete remove_ptr;
+    length--;
+}
+
+template <class T>
+void sequence<T>::remove_occur(T occur, T value) {
+    int count = 0;
+    int index = 0;
+    if (head_ptr == NULL){
+        return;
+    }
+    else if ( (head_ptr->data() == value) && (occur == 1) ){
+        remove_head();
+    }
+    node *cursor;
+    for (cursor = head_ptr; cursor != NULL; cursor = cursor->link()){
+        index++;
+        if(cursor->m_data == value){
+            count ++;
+            if (count == occur) {
+                remove_from(index);
+                break;
+            }
+        }
+    }
+}
+
+template <class T>
+int sequence<T>::count(const T data) {
+    const node *cursor;
+    int count = 0;
+    for (cursor = head_ptr; cursor != NULL; cursor = cursor->link()) {
+        if (cursor->m_data == data){
+            count++;
+        }
+    }
+    return count;
+}
+
+//=====================================================================================
+//OPERATORS & FRIEND FUNCTIONS
+
+template <class T>
+void sequence<T>::operator+= (const sequence<T> &s2) {
+    if (s2.length > 0){
+        node *cursor = s2.head_ptr;
+        for(int i = 1; i < (s2.length) + 1; i++){
+            this->insert_tail(cursor->m_data);
+            cursor = cursor->link();
+        }
+    }
+}
+
+template <class T>
+void sequence<T>::operator+=(const T &value) {
+    if (this->length == 0){
+        return;
+    }
+    else {
+        this->insert_tail(value);
+    }
+}
+
+template <class T>
+void sequence<T>::operator=(const sequence<T> &s2) {
+    if (s2.length == 0){
+        return;
+    }
+    while (this->head_ptr != NULL){
+        this->remove_head();
+    }
+    node *cursor = s2.head_ptr;
+    for (int i = 1; i < s2.length + 1; i++){
+        this->insert_tail(cursor->data());
+        cursor = cursor->link();
+    }
+}
+
+template <class T>
+void sequence<T>::operator = (const T & value){
+    while (this->head_ptr != NULL){
+        this->remove_head();
+    }
+    this->insert_head(value);
+}
+
+template <class R>
+sequence<R> operator +(const sequence <R> & s1, const sequence<R> & s2){
+    sequence<R> result;
+    result += s1;
+    result += s2;
+    return result;
+}
+
+template<class R>
+sequence<R> operator + (const sequence <R> & s1, const R & value){
+    sequence<R> result;
+    result += s1;
+    result.insert_tail(value);
+    return result;
+}
+
+template <class T>
+bool sequence<T>::operator==(const sequence<T> &s2) {
+    if (length != s2.length) return false;
+    node *a1 = head_ptr;
+    node *a2 = s2.head_ptr;
+    while(a1 != NULL) {
+        if (a2->data() != a1->data()) return false;
+        a1 = a1->link();
+        a2 = a2->link();
+    }
+    return true;
+}
+//=====================================================================================
+//ITERATOR
+//I used the [] operator instead of making a iterator class
+//In the main.cpp, I will use the regular for loop(int i...)
+//Then use the overloaded [] operator to output the linked list.
+
+template <class T>
+T &sequence<T>::operator[](const T &index) {
+    node *cursor = head_ptr;
+    for (int i = 0; i < index; i++ ){
+        cursor = cursor->link();
+    }
+    return (cursor->m_data);
+}
